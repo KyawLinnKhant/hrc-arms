@@ -1,0 +1,36 @@
+# Default joint positions used by joint_state_publisher_gui when no
+# /joint_states source is providing them. Picks a "ready" pose where
+# both UR5e arms have the upper arm horizontal and the forearm folded
+# vertically upward, so the grippers hover over the table edge — the
+# canonical cobot "stand by" look, not the flat shipping pose.
+#
+# UR conventions (radians):
+#   shoulder_pan  = base rotation around Z
+#   shoulder_lift = upper arm pitch (negative tilts forward)
+#   elbow         = elbow joint (positive folds forearm up)
+#   wrist_1       = wrist pitch
+#   wrist_2       = wrist yaw
+#   wrist_3       = wrist roll (gripper rotation)
+
+joint_state_publisher:
+  ros__parameters:
+    zeros:
+      # Left arm — upper arm forward, forearm folded up, gripper pointing forward and slightly down.
+      left_shoulder_pan_joint:  0.0
+      left_shoulder_lift_joint: -1.5708
+      left_elbow_joint:          1.5708
+      left_wrist_1_joint:       -1.5708
+      left_wrist_2_joint:        0.0
+      left_wrist_3_joint:        0.0
+
+      # Right arm — same pose mirrored.
+      right_shoulder_pan_joint:  0.0
+      right_shoulder_lift_joint: -1.5708
+      right_elbow_joint:         1.5708
+      right_wrist_1_joint:      -1.5708
+      right_wrist_2_joint:       0.0
+      right_wrist_3_joint:       0.0
+
+      # Grippers — start closed.
+      left_finger_joint:  0.0
+      right_finger_joint: 0.0

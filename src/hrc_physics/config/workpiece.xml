@@ -1,0 +1,113 @@
+<mujoco model="hrc_workpiece">
+  <!--
+    Physics-only scene for the HRC-ARMS cube. The arms themselves are
+    NOT simulated dynamically here — only the cube has real physics.
+    The gripper bodies (gripper_base + finger_a + finger_b for each
+    arm) are MuJoCo "mocap" bodies, teleported each tick from the TF
+    tree (driven by the plan-only state machine in hrc_handoff_demo).
+    Contact between mocap finger geoms and the cube produces real
+    contact forces; the cube responds with real gravity, real
+    friction, real cube-cube and cube-shelf collisions.
+
+    Geometry MUST match hrc_description/urdf/workcell.urdf.xacro
+    collisions so that what MoveIt plans against == what physics sees.
+    MuJoCo size is HALF-extent (not full extent). All origins in
+    world frame unless noted.
+  -->
+
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast"
+          iterations="50" solver="Newton" tolerance="1e-8"/>
+
+  <visual>
+    <global offwidth="800" offheight="600"/>
+  </visual>
+
+  <default>
+    <geom contype="1" conaffinity="1" condim="4" friction="1.0 0.05 0.001"
+          solref="0.005 1" solimp="0.95 0.99 0.001"/>
+    <default class="static">
+      <geom rgba="0.50 0.35 0.20 1"/>
+    </default>
+    <default class="shelf">
+      <geom rgba="0.65 0.48 0.28 1"/>
+    </default>
+    <default class="gripper">
+      <geom contype="1" conaffinity="1" condim="4" rgba="0.70 0.72 0.75 1"
+            friction="2.0 0.1 0.002"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <!-- World floor (catches any cube that escapes the cell) -->
+    <geom name="floor" type="plane" size="3 3 0.05" pos="0 0 0"
+          rgba="0.85 0.85 0.85 1"/>
+
+    <!-- Pedestal (collision proxy so a falling cube doesn't tunnel through) -->
+    <geom name="pedestal" type="box" size="0.25 0.90 0.40" pos="0 0 0.40"
+          rgba="0.30 0.30 0.32 1"/>
+
+    <!-- Pickup table (top at Z=0.78) -->
+    <geom name="pick_table" type="box" size="0.275 0.275 0.02" pos="0 -1.175 0.76"
+          rgba="0.65 0.65 0.65 1"/>
+
+    <!-- ============= Cabinet (mirrors workcell.urdf.xacro panel collisions) ====
+         All sizes here are HALF-extent. URDF uses full-extent. -->
+    <geom name="cab_back"    class="static" type="box"
+          size="0.35 0.01 0.325" pos="0.30 1.49 1.225"/>
+    <geom name="cab_left"    class="static" type="box"
+          size="0.01 0.10 0.325" pos="-0.04 1.40 1.225"/>
+    <geom name="cab_right"   class="static" type="box"
+          size="0.01 0.10 0.325" pos="0.64 1.40 1.225"/>
+    <geom name="cab_top"     class="static" type="box"
+          size="0.35 0.10 0.01" pos="0.30 1.40 1.54"/>
+    <geom name="cab_bottom"  class="static" type="box"
+          size="0.35 0.10 0.01" pos="0.30 1.40 0.91"/>
+    <geom name="cab_divider" class="shelf"  type="box"
+          size="0.33 0.09 0.01" pos="0.30 1.40 1.22"/>
+
+    <!-- ============= Gripper mocap bodies (6 total) ====================
+         Each is teleported by mujoco_runner.py to follow the matching TF
+         frame each step. Geom dimensions match the Robotiq 2F-85 macro:
+           gripper_base: 0.060 x 0.085 x 0.050  (half: 0.030 0.0425 0.025)
+                         origin offset 0 0 0.025 inside the body
+           finger:       0.018 x 0.012 x 0.075  (half: 0.009 0.006 0.0375)
+                         origin offset 0 0 0.0375 inside the body
+         The body origin is the URDF link origin, so geom 'pos' here =
+         the URDF visual <origin xyz="...">. -->
+    <body name="left_gripper_base" mocap="true" pos="0 -0.60 1.50">
+      <geom class="gripper" name="left_gripper_base_geom" type="box"
+            size="0.030 0.0425 0.025" pos="0 0 0.025"/>
+    </body>
+    <body name="left_finger_a" mocap="true" pos="0 -0.642 1.55">
+      <geom class="gripper" name="left_finger_a_geom" type="box"
+            size="0.009 0.006 0.0375" pos="0 0 0.0375"/>
+    </body>
+    <body name="left_finger_b" mocap="true" pos="0 -0.558 1.55">
+      <geom class="gripper" name="left_finger_b_geom" type="box"
+            size="0.009 0.006 0.0375" pos="0 0 0.0375"/>
+    </body>
+
+    <body name="right_gripper_base" mocap="true" pos="0 0.60 1.50">
+      <geom class="gripper" name="right_gripper_base_geom" type="box"
+            size="0.030 0.0425 0.025" pos="0 0 0.025"/>
+    </body>
+    <body name="right_finger_a" mocap="true" pos="0 0.558 1.55">
+      <geom class="gripper" name="right_finger_a_geom" type="box"
+            size="0.009 0.006 0.0375" pos="0 0 0.0375"/>
+    </body>
+    <body name="right_finger_b" mocap="true" pos="0 0.642 1.55">
+      <geom class="gripper" name="right_finger_b_geom" type="box"
+            size="0.009 0.006 0.0375" pos="0 0 0.0375"/>
+    </body>
+
+    <!-- Cubes are injected programmatically by mujoco_runner at
+         load time (one <body> per cube in the spawn pool), along with
+         <contact><exclude> entries between every cube and every
+         gripper part. See _build_mjcf() in mujoco_runner.py. -->
+    <!-- __CUBE_BODIES__ -->
+  </worldbody>
+
+  <contact>
+    <!-- __GRIPPER_CUBE_EXCLUDES__ -->
+  </contact>
+</mujoco>

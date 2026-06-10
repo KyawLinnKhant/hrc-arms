@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  HRC-ARMS semantic description: dual UR5e + Robotiq 2F-85.
+
+  Planning groups:
+    left_arm        — kinematic chain left_base_link → left_tool0
+    right_arm       — kinematic chain right_base_link → right_tool0
+    both_arms       — composite of left_arm + right_arm
+    left_gripper    — joint group: left_finger_joint
+    right_gripper   — joint group: right_finger_joint
+
+  Named poses: home, ready, handover for each arm + 'open'/'closed' for grippers.
+
+  Disabled collisions: intra-arm adjacent pairs (per UR convention) +
+  the fixed world structures (pedestal, table, camera mast) against
+  each other and against the arm bases.
+-->
+<robot name="hrc_workcell">
+
+  <!-- Virtual joint: anchor the URDF root ('world' link) into the
+       planning frame. Type 'fixed' since the workcell is bolted down. -->
+  <virtual_joint name="world_joint" type="fixed"
+                 parent_frame="world" child_link="world"/>
+
+  <!-- ==================== GROUPS ==================== -->
+  <group name="left_arm">
+    <chain base_link="left_base_link" tip_link="left_tool0"/>
+  </group>
+  <group name="right_arm">
+    <chain base_link="right_base_link" tip_link="right_tool0"/>
+  </group>
+  <group name="both_arms">
+    <group name="left_arm"/>
+    <group name="right_arm"/>
+  </group>
+
+  <group name="left_gripper">
+    <joint name="left_finger_joint"/>
+  </group>
+  <group name="right_gripper">
+    <joint name="right_finger_joint"/>
+  </group>
+
+  <!-- ==================== GROUP STATES ==================== -->
+  <!-- left arm: 'home' = candle (all zeros, arm points straight up) -->
+  <group_state name="home" group="left_arm">
+    <joint name="left_shoulder_pan_joint"  value="0.0"/>
+    <joint name="left_shoulder_lift_joint" value="0.0"/>
+    <joint name="left_elbow_joint"         value="0.0"/>
+    <joint name="left_wrist_1_joint"       value="0.0"/>
+    <joint name="left_wrist_2_joint"       value="0.0"/>
+    <joint name="left_wrist_3_joint"       value="0.0"/>
+  </group_state>
+  <!-- left arm: 'ready' = the JSP-GUI default pose, upper arm horizontal
+       forward, forearm folded vertically up, wrist bent forward -->
+  <group_state name="ready" group="left_arm">
+    <joint name="left_shoulder_pan_joint"  value="0.0"/>
+    <joint name="left_shoulder_lift_joint" value="-1.5708"/>
+    <joint name="left_elbow_joint"         value="1.5708"/>
+    <joint name="left_wrist_1_joint"       value="-1.5708"/>
+    <joint name="left_wrist_2_joint"       value="0.0"/>
+    <joint name="left_wrist_3_joint"       value="0.0"/>
+  </group_state>
+  <!-- left arm: 'handover' = gripper presented to the right side of
+       midline at approximately (0.45, 0.0, 1.10) world. -->
+  <group_state name="handover" group="left_arm">
+    <joint name="left_shoulder_pan_joint"  value="0.6"/>
+    <joint name="left_shoulder_lift_joint" value="-1.2"/>
+    <joint name="left_elbow_joint"         value="1.6"/>
+    <joint name="left_wrist_1_joint"       value="-1.9"/>
+    <joint name="left_wrist_2_joint"       value="-1.5708"/>
+    <joint name="left_wrist_3_joint"       value="0.0"/>
+  </group_state>
+
+  <!-- right arm: mirror of left -->
+  <group_state name="home" group="right_arm">
+    <joint name="right_shoulder_pan_joint"  value="0.0"/>
+    <joint name="right_shoulder_lift_joint" value="0.0"/>
+    <joint name="right_elbow_joint"         value="0.0"/>
+    <joint name="right_wrist_1_joint"       value="0.0"/>
+    <joint name="right_wrist_2_joint"       value="0.0"/>
+    <joint name="right_wrist_3_joint"       value="0.0"/>
+  </group_state>
+  <group_state name="ready" group="right_arm">
+    <joint name="right_shoulder_pan_joint"  value="0.0"/>
+    <joint name="right_shoulder_lift_joint" value="-1.5708"/>
+    <joint name="right_elbow_joint"         value="1.5708"/>
+    <joint name="right_wrist_1_joint"       value="-1.5708"/>
+    <joint name="right_wrist_2_joint"       value="0.0"/>
+    <joint name="right_wrist_3_joint"       value="0.0"/>
+  </group_state>
+  <group_state name="handover" group="right_arm">
+    <joint name="right_shoulder_pan_joint"  value="-0.6"/>
+    <joint name="right_shoulder_lift_joint" value="-1.2"/>
+    <joint name="right_elbow_joint"         value="1.6"/>
+    <joint name="right_wrist_1_joint"       value="-1.9"/>
+    <joint name="right_wrist_2_joint"       value="1.5708"/>
+    <joint name="right_wrist_3_joint"       value="0.0"/>
+  </group_state>
+
+  <!-- combined dual-arm ready pose -->
+  <group_state name="ready" group="both_arms">
+    <joint name="left_shoulder_pan_joint"   value="0.0"/>
+    <joint name="left_shoulder_lift_joint"  value="-1.5708"/>
+    <joint name="left_elbow_joint"          value="1.5708"/>
+    <joint name="left_wrist_1_joint"        value="-1.5708"/>
+    <joint name="left_wrist_2_joint"        value="0.0"/>
+    <joint name="left_wrist_3_joint"        value="0.0"/>
+    <joint name="right_shoulder_pan_joint"  value="0.0"/>
+    <joint name="right_shoulder_lift_joint" value="-1.5708"/>
+    <joint name="right_elbow_joint"         value="1.5708"/>
+    <joint name="right_wrist_1_joint"       value="-1.5708"/>
+    <joint name="right_wrist_2_joint"       value="0.0"/>
+    <joint name="right_wrist_3_joint"       value="0.0"/>
+  </group_state>
+
+  <!-- gripper poses (Robotiq 2F-85 one-sided 0..0.040 m stroke) -->
+  <group_state name="open"   group="left_gripper">
+    <joint name="left_finger_joint" value="0.040"/>
+  </group_state>
+  <group_state name="closed" group="left_gripper">
+    <joint name="left_finger_joint" value="0.0"/>
+  </group_state>
+  <group_state name="open"   group="right_gripper">
+    <joint name="right_finger_joint" value="0.040"/>
+  </group_state>
+  <group_state name="closed" group="right_gripper">
+    <joint name="right_finger_joint" value="0.0"/>
+  </group_state>
+
+  <!-- ==================== END EFFECTORS ==================== -->
+  <end_effector name="left_ee"  parent_link="left_tool0"  group="left_gripper"  parent_group="left_arm"/>
+  <end_effector name="right_ee" parent_link="right_tool0" group="right_gripper" parent_group="right_arm"/>
+
+  <!-- ==================== PASSIVE JOINTS ==================== -->
+  <!-- finger_b mimics finger_joint via URDF <mimic> — declare passive
+       so MoveIt does not attempt to plan it independently. -->
+  <passive_joint name="left_finger_b_joint"/>
+  <passive_joint name="right_finger_b_joint"/>
+
+  <!-- ==================== DISABLED COLLISIONS ==================== -->
+  <!-- Left arm: intra-chain adjacent pairs (UR convention) -->
+  <disable_collisions link1="left_base_link"          link2="left_base_link_inertia"  reason="Adjacent"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="left_shoulder_link"      reason="Adjacent"/>
+  <disable_collisions link1="left_shoulder_link"      link2="left_upper_arm_link"     reason="Adjacent"/>
+  <disable_collisions link1="left_upper_arm_link"     link2="left_forearm_link"       reason="Adjacent"/>
+  <disable_collisions link1="left_forearm_link"       link2="left_wrist_1_link"       reason="Adjacent"/>
+  <disable_collisions link1="left_wrist_1_link"       link2="left_wrist_2_link"       reason="Adjacent"/>
+  <disable_collisions link1="left_wrist_2_link"       link2="left_wrist_3_link"       reason="Adjacent"/>
+  <disable_collisions link1="left_wrist_3_link"       link2="left_flange"             reason="Adjacent"/>
+  <disable_collisions link1="left_flange"             link2="left_tool0"              reason="Adjacent"/>
+  <disable_collisions link1="left_wrist_1_link"       link2="left_wrist_3_link"       reason="Never"/>
+
+  <!-- Right arm: same -->
+  <disable_collisions link1="right_base_link"         link2="right_base_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="right_base_link_inertia" link2="right_shoulder_link"     reason="Adjacent"/>
+  <disable_collisions link1="right_shoulder_link"     link2="right_upper_arm_link"    reason="Adjacent"/>
+  <disable_collisions link1="right_upper_arm_link"    link2="right_forearm_link"      reason="Adjacent"/>
+  <disable_collisions link1="right_forearm_link"      link2="right_wrist_1_link"      reason="Adjacent"/>
+  <disable_collisions link1="right_wrist_1_link"      link2="right_wrist_2_link"      reason="Adjacent"/>
+  <disable_collisions link1="right_wrist_2_link"      link2="right_wrist_3_link"      reason="Adjacent"/>
+  <disable_collisions link1="right_wrist_3_link"      link2="right_flange"            reason="Adjacent"/>
+  <disable_collisions link1="right_flange"            link2="right_tool0"             reason="Adjacent"/>
+  <disable_collisions link1="right_wrist_1_link"      link2="right_wrist_3_link"      reason="Never"/>
+
+  <!-- Inter-arm bases: both bolted to the same pedestal, can never reach each other -->
+  <disable_collisions link1="left_base_link"          link2="right_base_link"         reason="Never"/>
+  <disable_collisions link1="left_base_link"          link2="right_base_link_inertia" reason="Never"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="right_base_link"         reason="Never"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="right_base_link_inertia" reason="Never"/>
+  <disable_collisions link1="left_base_link"          link2="right_shoulder_link"     reason="Never"/>
+  <disable_collisions link1="right_base_link"         link2="left_shoulder_link"      reason="Never"/>
+  <disable_collisions link1="left_shoulder_link"      link2="right_shoulder_link"     reason="Never"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="right_shoulder_link"     reason="Never"/>
+  <disable_collisions link1="right_base_link_inertia" link2="left_shoulder_link"      reason="Never"/>
+
+  <!-- Arm bases adjacent to the pedestal they sit on -->
+  <disable_collisions link1="pedestal_link"           link2="left_base_link"          reason="Adjacent"/>
+  <disable_collisions link1="pedestal_link"           link2="left_base_link_inertia"  reason="Never"/>
+  <disable_collisions link1="pedestal_link"           link2="left_shoulder_link"      reason="Never"/>
+  <disable_collisions link1="pedestal_link"           link2="right_base_link"         reason="Adjacent"/>
+  <disable_collisions link1="pedestal_link"           link2="right_base_link_inertia" reason="Never"/>
+  <disable_collisions link1="pedestal_link"           link2="right_shoulder_link"     reason="Never"/>
+
+  <!-- Fixed world structures never collide with each other -->
+  <disable_collisions link1="pedestal_link"           link2="table_link"              reason="Never"/>
+  <disable_collisions link1="pedestal_link"           link2="camera_mast_link"        reason="Never"/>
+  <disable_collisions link1="table_link"              link2="camera_mast_link"        reason="Never"/>
+  <!-- Wall + cabinet (added in side-station re-lock) vs other fixed -->
+  <disable_collisions link1="pedestal_link"           link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="pedestal_link"           link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="table_link"              link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="table_link"              link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="camera_mast_link"        link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="camera_mast_link"        link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="back_wall_link"          link2="cabinet_link"            reason="Adjacent"/>
+  <!-- Arm bases never reach the wall or cabinet (they're far behind) -->
+  <disable_collisions link1="left_base_link"          link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="left_base_link"          link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="left_base_link_inertia"  link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="right_base_link"         link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="right_base_link"         link2="cabinet_link"            reason="Never"/>
+  <disable_collisions link1="right_base_link_inertia" link2="back_wall_link"          reason="Never"/>
+  <disable_collisions link1="right_base_link_inertia" link2="cabinet_link"            reason="Never"/>
+
+  <!-- Gripper internals: base + fingers always touch each other and the wrist tool0 -->
+  <disable_collisions link1="left_wrist_3_link"       link2="left_gripper_base"       reason="Never"/>
+  <disable_collisions link1="left_flange"             link2="left_gripper_base"       reason="Never"/>
+  <disable_collisions link1="left_tool0"              link2="left_gripper_base"       reason="Adjacent"/>
+  <disable_collisions link1="left_gripper_base"       link2="left_finger_a"           reason="Adjacent"/>
+  <disable_collisions link1="left_gripper_base"       link2="left_finger_b"           reason="Adjacent"/>
+  <disable_collisions link1="left_finger_a"           link2="left_finger_b"           reason="Default"/>
+  <disable_collisions link1="left_wrist_2_link"       link2="left_gripper_base"       reason="Never"/>
+
+  <disable_collisions link1="right_wrist_3_link"      link2="right_gripper_base"      reason="Never"/>
+  <disable_collisions link1="right_flange"            link2="right_gripper_base"      reason="Never"/>
+  <disable_collisions link1="right_tool0"             link2="right_gripper_base"      reason="Adjacent"/>
+  <disable_collisions link1="right_gripper_base"      link2="right_finger_a"          reason="Adjacent"/>
+  <disable_collisions link1="right_gripper_base"      link2="right_finger_b"          reason="Adjacent"/>
+  <disable_collisions link1="right_finger_a"          link2="right_finger_b"          reason="Default"/>
+  <disable_collisions link1="right_wrist_2_link"      link2="right_gripper_base"      reason="Never"/>
+
+  <!-- Handover: left and right fingers legitimately come close (and may
+       graze) during the perpendicular hand-off. Disable cross-arm finger
+       collisions so RRTConnect's intermediate states aren't rejected
+       just because finger boxes briefly touch each other. The arms'
+       larger links still collide-check normally. -->
+  <disable_collisions link1="left_finger_a"           link2="right_finger_a"          reason="Adjacent during handover"/>
+  <disable_collisions link1="left_finger_a"           link2="right_finger_b"          reason="Adjacent during handover"/>
+  <disable_collisions link1="left_finger_b"           link2="right_finger_a"          reason="Adjacent during handover"/>
+  <disable_collisions link1="left_finger_b"           link2="right_finger_b"          reason="Adjacent during handover"/>
+  <disable_collisions link1="left_gripper_base"       link2="right_finger_a"          reason="Adjacent during handover"/>
+  <disable_collisions link1="left_gripper_base"       link2="right_finger_b"          reason="Adjacent during handover"/>
+  <disable_collisions link1="right_gripper_base"      link2="left_finger_a"           reason="Adjacent during handover"/>
+  <disable_collisions link1="right_gripper_base"      link2="left_finger_b"           reason="Adjacent during handover"/>
+
+</robot>

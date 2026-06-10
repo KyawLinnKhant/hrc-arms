@@ -1,0 +1,32 @@
+# colcon build artefacts
+build/
+install/
+log/
+
+# MuJoCo runtime logs
+MUJOCO_LOG.TXT
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Local-only
+.env
+*.local
+
+# Large model weights (downloaded at runtime in Phase 4)
+src/hrc_vlm_perception/models/
+*.pt
+*.onnx
+*.gguf

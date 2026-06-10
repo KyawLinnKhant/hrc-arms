@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!--
+    Simplified Intel RealSense D435 macro.
+    Single housing link with the ROS-convention optical frame
+    (z-forward, x-right, y-down). Visual-only stand-in — no Gazebo
+    sensor plugins here; those go in a later sim-only package.
+
+    Housing dims approximate the real D435: 90 x 25 x 25 mm.
+  -->
+  <!-- Materials are defined at the workcell top level (see
+       workcell.urdf.xacro) so the macro stays idempotent. -->
+
+  <xacro:macro name="realsense_d435" params="prefix parent *origin">
+
+    <link name="${prefix}camera_link">
+      <visual>
+        <geometry>
+          <box size="0.025 0.090 0.025"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="d435_dark"/>
+      </visual>
+      <visual>
+        <geometry>
+          <cylinder length="0.006" radius="0.0065"/>
+        </geometry>
+        <origin xyz="0.012 -0.0175 0" rpy="0 1.5708 0"/>
+        <material name="d435_lens"/>
+      </visual>
+      <visual>
+        <geometry>
+          <cylinder length="0.006" radius="0.0065"/>
+        </geometry>
+        <origin xyz="0.012 0.0175 0" rpy="0 1.5708 0"/>
+        <material name="d435_lens"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.025 0.090 0.025"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.072"/>
+        <inertia ixx="1e-5" iyy="1e-5" izz="1e-5"
+                 ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}camera_mount" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}camera_link"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <!-- Optical frame: z-forward, x-right, y-down (ROS REP-103) -->
+    <link name="${prefix}camera_optical_frame"/>
+    <joint name="${prefix}camera_to_optical" type="fixed">
+      <parent link="${prefix}camera_link"/>
+      <child link="${prefix}camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

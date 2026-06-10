@@ -1,0 +1,484 @@
+<?xml version="1.0"?>
+<!--
+  HRC-ARMS workcell — pedestal-mounted dual UR5e cobots.
+  WIDE-PEDESTAL revision (2026-06-06, second iteration): pedestal Y
+  width 0.80 → 1.80 m, arms ±0.22 → ±0.60 (1.20 m separation, was 0.44 m
+  originally). The first widening to 1.30 m / ±0.40 was not enough — the
+  user requested further separation for the dual-arm handover plan to
+  succeed reliably.
+
+  World frame is at floor level (Z=0).
+  Pedestal extents X in [-0.25, +0.25], Y in [-0.90, +0.90], Z in [0, 0.80].
+  Arms mount on the pedestal top at (0, +/-0.60, 0.80). 1.20 m separation.
+  Worktable on -Y side (left arm side): top at Z=0.78, centered at (0, -1.175).
+  Positioned flush with the pedestal's -Y edge: same X centerline as the
+  pedestal, table near-Y edge touches pedestal -Y edge (Y=-0.90). Reads
+  as a workbench extending the mount in the -Y direction rather than a
+  separate piece floating in front.
+  Wall + wall-mounted cabinet on +Y side (right arm side) with two shelves.
+  Cabinet front face at y = +1.30, wall at y = +1.50. Cabinet pulled
+  in 0.25 m vs the prior lock to make the lower shelf comfortably
+  reachable for the right arm's stacking step (right tool0 to lower
+  shelf: ~0.74 m, well within the 0.85 m UR5e envelope).
+  Human walkway between right-arm side of pedestal (y=+0.90) and cabinet
+  front face (y=+1.30): 0.40 m clearance (narrower than before; still
+  walkable for a person sideways).
+  Overhead D435 on a boom mast at (-0.80, 0, 0) — centered directly
+  behind the pedestal (Y=0). Boom is a simple +X-only segment of 1.45 m,
+  putting the camera over world (0.65, 0).
+  Mast position: dist to each arm (0, ±0.60) = sqrt(0.64 + 0.36) = 1.00 m
+  ✓ stays > 0.85 m UR5e reach from BOTH arms with symmetric clearance.
+
+  Description-only. No ros2_control tags, no Gazebo plugins. Those go
+  in a sim package later. RViz + joint_state_publisher_gui is enough
+  to visualize.
+-->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="hrc_workcell">
+
+  <!-- ============= xacro args ============= -->
+  <xacro:arg name="ur_type" default="ur5e"/>
+
+  <!-- ============= materials (all defined ONCE here) ============= -->
+  <material name="cell_pedestal"><color rgba="0.18 0.18 0.20 1.0"/></material>
+  <material name="cell_steel">   <color rgba="0.55 0.57 0.60 1.0"/></material>
+  <material name="cell_table">   <color rgba="0.60 0.42 0.24 1.0"/></material>
+  <material name="cell_safety_yellow"><color rgba="0.95 0.78 0.10 1.0"/></material>
+  <material name="cell_wall">    <color rgba="0.82 0.80 0.76 1.0"/></material>
+  <material name="cell_cabinet"> <color rgba="0.50 0.35 0.20 1.0"/></material>
+  <material name="cell_shelf">   <color rgba="0.65 0.48 0.28 1.0"/></material>
+
+  <!-- v2 section accents -->
+  <material name="section_blue_glass">  <color rgba="0.70 0.85 1.00 0.30"/></material>
+  <material name="section_yellow_tag">  <color rgba="0.95 0.85 0.20 1.00"/></material>
+  <material name="section_pink_tray">   <color rgba="0.95 0.55 0.75 1.00"/></material>
+  <material name="section_pink_pocket"> <color rgba="0.55 0.20 0.35 1.00"/></material>
+  <material name="section_purple_tag">  <color rgba="0.55 0.30 0.75 1.00"/></material>
+  <material name="robotiq_dark"> <color rgba="0.18 0.18 0.20 1.0"/></material>
+  <material name="robotiq_steel"><color rgba="0.70 0.72 0.75 1.0"/></material>
+  <material name="d435_dark">    <color rgba="0.10 0.10 0.12 1.0"/></material>
+  <material name="d435_lens">    <color rgba="0.05 0.10 0.20 1.0"/></material>
+
+  <!-- ============= world ============= -->
+  <link name="world"/>
+
+  <!-- ============= pedestal (wider in Y) ============= -->
+  <link name="pedestal_link">
+    <visual>
+      <geometry><box size="0.50 1.80 0.80"/></geometry>
+      <origin xyz="0 0 0.40"/>
+      <material name="cell_pedestal"/>
+    </visual>
+    <visual>
+      <geometry><box size="0.52 1.82 0.04"/></geometry>
+      <origin xyz="0 0 0.78"/>
+      <material name="cell_safety_yellow"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.50 1.80 0.80"/></geometry>
+      <origin xyz="0 0 0.40"/>
+    </collision>
+    <inertial>
+      <mass value="100.0"/>
+      <inertia ixx="10.0" iyy="10.0" izz="10.0" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_pedestal" type="fixed">
+    <parent link="world"/>
+    <child link="pedestal_link"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <!-- ============= worktable (left-arm pick station, -Y side) =============
+       Square 0.55 x 0.55 m, 0.04 m thick top at Z=0.78. Centered at world
+       (0, -1.175). Footprint extends X in [-0.275, +0.275], Y in [-1.45, -0.90].
+       Positioned flush with the pedestal's -Y edge (Y=-0.90) and sharing
+       the pedestal's X centerline. Reads as an extension of the mount.
+       Left arm reach check (base at (0,-0.60,0.80), reach 0.85 m):
+         - table near corner (±0.275,-0.90, 0.78): dist = 0.41 m ✓
+         - table center      (0,    -1.175,0.78): dist = 0.58 m ✓
+         - table far  corner (±0.275,-1.45, 0.78): dist = 0.89 m → fingertip
+           extension reaches; cubes are placed near the table center.
+  -->
+  <link name="table_link">
+    <visual>
+      <geometry><box size="0.55 0.55 0.04"/></geometry>
+      <origin xyz="0 0 0.76"/>
+      <material name="cell_table"/>
+    </visual>
+    <!-- four legs at table corners (x=±0.225, y=±0.225 from table center, 5 cm inset) -->
+    <visual>
+      <geometry><cylinder length="0.76" radius="0.025"/></geometry>
+      <origin xyz=" 0.225  0.225 0.38"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>
+      <geometry><cylinder length="0.76" radius="0.025"/></geometry>
+      <origin xyz=" 0.225 -0.225 0.38"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>
+      <geometry><cylinder length="0.76" radius="0.025"/></geometry>
+      <origin xyz="-0.225  0.225 0.38"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>
+      <geometry><cylinder length="0.76" radius="0.025"/></geometry>
+      <origin xyz="-0.225 -0.225 0.38"/>
+      <material name="cell_steel"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.55 0.55 0.04"/></geometry>
+      <origin xyz="0 0 0.76"/>
+    </collision>
+    <inertial>
+      <mass value="12.0"/>
+      <inertia ixx="1.2" iyy="1.2" izz="1.2" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_table" type="fixed">
+    <parent link="world"/>
+    <child link="table_link"/>
+    <origin xyz="0 -1.175 0"/>
+  </joint>
+
+  <!-- ============= +Y cabinet (v2 — 4 stacking sections) ====
+
+       v2 (2026-06-08, final): back to a 4-section cabinet, all
+       four tasks are STACKING (no inserts, no tubes). Cabinet
+       pulled forward to Y=+1.00, no walkway.
+
+         Cabinet: X[-0.05,+0.55], Y[+1.00,+1.20], Z[+0.90,+1.55]
+         Vertical divider: X=+0.25
+         Horizontal divider: Z=+1.22
+         Wall: flush with cabinet back, Y[+1.20,+1.22]
+
+         TL (X[-0.03,+0.23], Z[+1.23,+1.53]) — BLUE: row of 5 cubes
+           in a single line on the upper-left shelf, touching.
+         TR (X[+0.27,+0.53], Z[+1.23,+1.53]) — YELLOW: 3-2-1
+           pyramid (6 cubes) in X-Z plane, single Y.
+         BL (X[-0.03,+0.23], Z[+0.92,+1.21]) — PINK: tower of 4
+           cubes stacked vertically (single X-Y position).
+         BR (X[+0.27,+0.53], Z[+0.92,+1.21]) — PURPLE: 2×2 base
+           + 1 on top (5 cubes, mini pyramid).
+
+       Right-arm reach (base (0,+0.60,0.80), 0.85 m):
+         TL row far  (+0.20, +1.10, +1.255), horiz = 0.62 m ✓
+         TR pyr top  (+0.40, +1.10, +1.355), horiz = 0.78 m ✓
+         BL tower top(+0.10, +1.10, +1.095), horiz = 0.48 m ✓
+         BR mini top (+0.40, +1.10, +0.995), horiz = 0.58 m ✓
+  -->
+  <link name="back_wall_link">
+    <visual>
+      <geometry><box size="1.40 0.02 2.20"/></geometry>
+      <origin xyz="0.40 1.21 1.10"/>
+      <material name="cell_wall"/>
+    </visual>
+    <collision>
+      <geometry><box size="1.40 0.02 2.20"/></geometry>
+      <origin xyz="0.40 1.21 1.10"/>
+    </collision>
+    <inertial>
+      <mass value="80.0"/>
+      <inertia ixx="20.0" iyy="20.0" izz="20.0" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_back_wall" type="fixed">
+    <parent link="world"/>
+    <child link="back_wall_link"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <!-- ============= 4-section stacking cabinet ============= -->
+  <link name="cabinet_link">
+    <!-- back panel -->
+    <visual>
+      <geometry><box size="0.60 0.02 0.65"/></geometry>
+      <origin xyz="0.25 1.19 1.225"/>
+      <material name="cell_cabinet"/>
+    </visual>
+    <!-- left side panel -->
+    <visual>
+      <geometry><box size="0.02 0.20 0.65"/></geometry>
+      <origin xyz="-0.04 1.10 1.225"/>
+      <material name="cell_cabinet"/>
+    </visual>
+    <!-- right side panel -->
+    <visual>
+      <geometry><box size="0.02 0.20 0.65"/></geometry>
+      <origin xyz="0.54 1.10 1.225"/>
+      <material name="cell_cabinet"/>
+    </visual>
+    <!-- top panel -->
+    <visual>
+      <geometry><box size="0.60 0.20 0.02"/></geometry>
+      <origin xyz="0.25 1.10 1.54"/>
+      <material name="cell_cabinet"/>
+    </visual>
+    <!-- bottom panel -->
+    <visual>
+      <geometry><box size="0.60 0.20 0.02"/></geometry>
+      <origin xyz="0.25 1.10 0.91"/>
+      <material name="cell_cabinet"/>
+    </visual>
+    <!-- horizontal divider shelf -->
+    <visual>
+      <geometry><box size="0.56 0.18 0.02"/></geometry>
+      <origin xyz="0.25 1.10 1.22"/>
+      <material name="cell_shelf"/>
+    </visual>
+    <!-- vertical divider (centred at X=+0.25, full height) -->
+    <visual>
+      <geometry><box size="0.02 0.18 0.61"/></geometry>
+      <origin xyz="0.25 1.10 1.225"/>
+      <material name="cell_shelf"/>
+    </visual>
+
+    <!-- Section colour tags along the FRONT edge of each quadrant
+         (small coloured strips on the front face of each section). -->
+    <visual>  <!-- TL blue -->
+      <geometry><box size="0.22 0.005 0.012"/></geometry>
+      <origin xyz="0.10 1.005 1.234"/>
+      <material name="section_blue_glass"/>
+    </visual>
+    <visual>  <!-- TR yellow -->
+      <geometry><box size="0.22 0.005 0.012"/></geometry>
+      <origin xyz="0.40 1.005 1.234"/>
+      <material name="section_yellow_tag"/>
+    </visual>
+    <visual>  <!-- BL pink -->
+      <geometry><box size="0.22 0.005 0.012"/></geometry>
+      <origin xyz="0.10 1.005 0.928"/>
+      <material name="section_pink_tray"/>
+    </visual>
+    <visual>  <!-- BR purple -->
+      <geometry><box size="0.22 0.005 0.012"/></geometry>
+      <origin xyz="0.40 1.005 0.928"/>
+      <material name="section_purple_tag"/>
+    </visual>
+
+    <!-- Per-panel collisions (hollow interior for the planner). -->
+    <collision>
+      <geometry><box size="0.60 0.02 0.65"/></geometry>
+      <origin xyz="0.25 1.19 1.225"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.02 0.20 0.65"/></geometry>
+      <origin xyz="-0.04 1.10 1.225"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.02 0.20 0.65"/></geometry>
+      <origin xyz="0.54 1.10 1.225"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.60 0.20 0.02"/></geometry>
+      <origin xyz="0.25 1.10 1.54"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.60 0.20 0.02"/></geometry>
+      <origin xyz="0.25 1.10 0.91"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.56 0.18 0.02"/></geometry>
+      <origin xyz="0.25 1.10 1.22"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.02 0.18 0.61"/></geometry>
+      <origin xyz="0.25 1.10 1.225"/>
+    </collision>
+
+    <inertial>
+      <mass value="25.0"/>
+      <inertia ixx="2.5" iyy="2.5" izz="2.5" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_cabinet" type="fixed">
+    <parent link="world"/>
+    <child link="cabinet_link"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <!-- (No standalone tube/wall/ledge links — all 4 sections in v2
+       are stacking-only inside the cabinet. Placement targets are
+       computed in the demo node; the cabinet just provides the
+       shelves and walls.) -->
+
+
+  <!-- ============= camera mast (centered on Y=0) =============
+
+       Geometry constraint: UR5e reach is 0.85 m from each base at
+       (0, ±0.60, 0.80). Mast base placed at world (-0.80, 0, 0) on the
+       midline behind the pedestal — symmetric for both arms.
+         dist to left  base (0, -0.60) = sqrt(0.64 + 0.36) = 1.00 m  ✓
+         dist to right base (0, +0.60) = sqrt(0.64 + 0.36) = 1.00 m  ✓
+
+       Mast geometry (LOCAL to mast frame, Y boom dropped):
+         - vertical post:    (0, 0, 0) → (0, 0, 2.10)
+         - boom seg X only:  (0, 0, 2.10) → (+1.45, 0, 2.10)
+         - camera hangs at local (+1.45, 0, 2.10) → world (0.65, 0, 2.10).
+       Diagonal brace now in the X-Z plane (was Y-Z).
+  -->
+  <link name="camera_mast_link">
+    <visual>
+      <geometry><cylinder length="2.10" radius="0.040"/></geometry>
+      <origin xyz="0 0 1.05"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>
+      <geometry><cylinder length="0.030" radius="0.080"/></geometry>
+      <origin xyz="0 0 0.015"/>
+      <material name="cell_pedestal"/>
+    </visual>
+    <!-- boom segment along +X, length 1.45 -->
+    <visual>
+      <geometry><box size="1.45 0.050 0.050"/></geometry>
+      <origin xyz="0.725 0 2.10"/>
+      <material name="cell_steel"/>
+    </visual>
+    <!-- diagonal brace: from local (0, 0, 1.20) to local (0.50, 0, 2.10).
+         delta = (0.50, 0, 0.90), length = sqrt(0.25 + 0.81) = 1.030.
+         tilt from +Z toward +X by atan2(0.50, 0.90) = 0.507 rad (around Y, positive). -->
+    <visual>
+      <geometry><box size="0.030 0.030 1.030"/></geometry>
+      <origin xyz="0.25 0 1.65" rpy="0 0.507 0"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>
+      <geometry><box size="0.180 0.180 0.080"/></geometry>
+      <origin xyz="1.45 0 2.060"/>
+      <material name="cell_pedestal"/>
+    </visual>
+    <visual>
+      <geometry><box size="0.190 0.190 0.005"/></geometry>
+      <origin xyz="1.45 0 2.018"/>
+      <material name="cell_safety_yellow"/>
+    </visual>
+    <inertial>
+      <mass value="6.0"/>
+      <inertia ixx="2.0" iyy="2.0" izz="0.2" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_mast" type="fixed">
+    <parent link="world"/>
+    <child link="camera_mast_link"/>
+    <origin xyz="-0.80 0 0"/>
+  </joint>
+
+  <!-- ============= UR5e left + right ============= -->
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
+
+  <xacro:property name="ur_type" value="$(arg ur_type)"/>
+  <xacro:property name="ur_config_dir" value="$(find ur_description)/config/${ur_type}"/>
+
+  <xacro:ur_robot
+      name="left"
+      tf_prefix="left_"
+      parent="pedestal_link"
+      joint_limits_parameters_file="${ur_config_dir}/joint_limits.yaml"
+      kinematics_parameters_file="${ur_config_dir}/default_kinematics.yaml"
+      physical_parameters_file="${ur_config_dir}/physical_parameters.yaml"
+      visual_parameters_file="${ur_config_dir}/visual_parameters.yaml"
+      generate_ros2_control_tag="false"
+      safety_limits="false"
+      use_fake_hardware="false"
+      sim_gazebo="false"
+      sim_ignition="false">
+    <origin xyz="0 -0.60 0.80" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <xacro:ur_robot
+      name="right"
+      tf_prefix="right_"
+      parent="pedestal_link"
+      joint_limits_parameters_file="${ur_config_dir}/joint_limits.yaml"
+      kinematics_parameters_file="${ur_config_dir}/default_kinematics.yaml"
+      physical_parameters_file="${ur_config_dir}/physical_parameters.yaml"
+      visual_parameters_file="${ur_config_dir}/visual_parameters.yaml"
+      generate_ros2_control_tag="false"
+      safety_limits="false"
+      use_fake_hardware="false"
+      sim_gazebo="false"
+      sim_ignition="false">
+    <origin xyz="0 0.60 0.80" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <!-- ============= grippers ============= -->
+  <xacro:include filename="$(find hrc_description)/urdf/macros/robotiq_2f85.xacro"/>
+
+  <xacro:robotiq_2f85 prefix="left_" parent="left_tool0">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:robotiq_2f85>
+
+  <xacro:robotiq_2f85 prefix="right_" parent="right_tool0">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:robotiq_2f85>
+
+  <!-- ============= overhead camera ============= -->
+  <xacro:include filename="$(find hrc_description)/urdf/macros/realsense_d435.xacro"/>
+
+  <!-- D435 mounted to the underside of the camera bracket.
+       Bracket is at local Z=2.06 (centered, 8 cm tall → top=2.10,
+       bottom=2.02). Camera body hangs just below, at local Z=1.97.
+       LOCAL (1.45, 0, 1.97) maps to world (0.65, 0, 1.97) — camera world
+       position unchanged; only its mast frame is now centered on Y=0. -->
+  <xacro:realsense_d435 prefix="overhead_" parent="camera_mast_link">
+    <origin xyz="1.45 0 1.97" rpy="0 1.5708 0"/>
+  </xacro:realsense_d435>
+
+  <!-- ============= Table-top D435 camera =============
+       A second D435 mounted above the pickup table on a small mast
+       behind the table (Y=-1.55), with a +Y boom extending toward the
+       table centre. Camera points STRAIGHT DOWN at the table top so
+       the LEFT arm can distinguish cube colours / positions (will
+       feed the Phase 4 VLM perception node).
+       Mast at world (0, -1.55, 0), height 1.50 m → boom +Y by 0.40 m
+       → camera body hangs at world (0, -1.15, 1.50). -->
+  <link name="table_cam_mast_link">
+    <visual>  <!-- vertical post -->
+      <geometry><cylinder length="1.50" radius="0.030"/></geometry>
+      <origin xyz="0 0 0.75"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>  <!-- baseplate -->
+      <geometry><cylinder length="0.020" radius="0.060"/></geometry>
+      <origin xyz="0 0 0.010"/>
+      <material name="cell_pedestal"/>
+    </visual>
+    <visual>  <!-- +Y boom toward table centre, length 0.40 m -->
+      <geometry><box size="0.040 0.40 0.040"/></geometry>
+      <origin xyz="0 0.20 1.50"/>
+      <material name="cell_steel"/>
+    </visual>
+    <visual>  <!-- camera bracket -->
+      <geometry><box size="0.080 0.080 0.030"/></geometry>
+      <origin xyz="0 0.40 1.485"/>
+      <material name="cell_pedestal"/>
+    </visual>
+    <collision>
+      <geometry><cylinder length="1.50" radius="0.030"/></geometry>
+      <origin xyz="0 0 0.75"/>
+    </collision>
+    <collision>
+      <geometry><box size="0.040 0.40 0.040"/></geometry>
+      <origin xyz="0 0.20 1.50"/>
+    </collision>
+    <inertial>
+      <mass value="3.0"/>
+      <inertia ixx="0.5" iyy="0.5" izz="0.1" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_to_table_cam_mast" type="fixed">
+    <parent link="world"/>
+    <child link="table_cam_mast_link"/>
+    <origin xyz="0 -1.55 0"/>
+  </joint>
+
+  <!-- D435 mounted under the bracket end, pointing straight DOWN.
+       Bracket end is at world (0, -1.15, 1.485). Camera body 0.025 m
+       below → world (0, -1.15, 1.46). rpy="3.1416 0 0" rotates the
+       camera's local +X (rgb axis) to world +X and its local +Z
+       (depth ray) to world -Z (straight down at the table). -->
+  <xacro:realsense_d435 prefix="table_" parent="table_cam_mast_link">
+    <origin xyz="0 0.40 1.46" rpy="3.1416 0 0"/>
+  </xacro:realsense_d435>
+
+</robot>

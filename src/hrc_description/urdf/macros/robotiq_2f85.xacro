@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!--
+    Simplified Robotiq 2F-85 parallel gripper macro.
+    Two prismatic fingers slide symmetrically along the Y axis of the
+    gripper base. Visual-only stand-in — accurate for kinematics and
+    visualization, not for physics. Replace with the upstream
+    robotiq_description package when fidelity matters.
+
+    Joint: ${prefix}finger_joint  (drives finger_a; finger_b mimics)
+      lower = 0.0   (closed)
+      upper = 0.04  (fully open — real 2F-85 has 0.085 m stroke total,
+                    each finger contributes 0.0425 m one-sided)
+  -->
+  <!-- Materials are defined at the workcell top level (see
+       workcell.urdf.xacro) so that instantiating this macro for both
+       arms does not produce a 'material not unique' URDF parser error. -->
+
+  <xacro:macro name="robotiq_2f85" params="prefix parent *origin">
+
+    <!-- Base / housing -->
+    <link name="${prefix}gripper_base">
+      <visual>
+        <geometry>
+          <box size="0.060 0.085 0.050"/>
+        </geometry>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <material name="robotiq_dark"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.060 0.085 0.050"/>
+        </geometry>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.30"/>
+        <inertia ixx="1e-4" iyy="1e-4" izz="1e-4"
+                 ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}gripper_mount" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}gripper_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <!-- TCP frame at finger midpoint -->
+    <link name="${prefix}tcp"/>
+    <joint name="${prefix}gripper_to_tcp" type="fixed">
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}tcp"/>
+      <origin xyz="0 0 0.135" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Finger A: slides toward -Y -->
+    <link name="${prefix}finger_a">
+      <visual>
+        <geometry>
+          <box size="0.018 0.012 0.075"/>
+        </geometry>
+        <origin xyz="0 0 0.0375" rpy="0 0 0"/>
+        <material name="robotiq_steel"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.018 0.012 0.075"/>
+        </geometry>
+        <origin xyz="0 0 0.0375" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.03"/>
+        <inertia ixx="1e-6" iyy="1e-6" izz="1e-6"
+                 ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}finger_joint" type="prismatic">
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}finger_a"/>
+      <origin xyz="0 -0.042 0.050" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="0.040" velocity="0.15" effort="50"/>
+    </joint>
+
+    <!-- Finger B: mirrors finger A -->
+    <link name="${prefix}finger_b">
+      <visual>
+        <geometry>
+          <box size="0.018 0.012 0.075"/>
+        </geometry>
+        <origin xyz="0 0 0.0375" rpy="0 0 0"/>
+        <material name="robotiq_steel"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.018 0.012 0.075"/>
+        </geometry>
+        <origin xyz="0 0 0.0375" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.03"/>
+        <inertia ixx="1e-6" iyy="1e-6" izz="1e-6"
+                 ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}finger_b_joint" type="prismatic">
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}finger_b"/>
+      <origin xyz="0 0.042 0.050" rpy="0 0 0"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0.0" upper="0.040" velocity="0.15" effort="50"/>
+      <mimic joint="${prefix}finger_joint" multiplier="1.0" offset="0.0"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

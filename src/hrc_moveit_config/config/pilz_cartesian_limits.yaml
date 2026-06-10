@@ -1,0 +1,9 @@
+# Pilz industrial motion planner — Cartesian-space limits. Not used
+# by OMPL but referenced by MoveItConfigsBuilder; provide reasonable
+# defaults to silence the loader warning.
+
+cartesian_limits:
+  max_trans_vel: 1.0
+  max_trans_acc: 2.25
+  max_trans_dec: -5.0
+  max_rot_vel: 1.57

@@ -1,0 +1,84 @@
+# MoveIt2 joint limits — velocity and acceleration caps used for
+# trajectory time-parameterization. Both arms share the same UR5e
+# datasheet values. The 'elbow_joint' position is artificially halved
+# (±π instead of ±2π) per the long-standing ROS-Industrial workaround
+# for OMPL search-space divergence — same rationale as the upstream
+# ur_description/config/ur5e/joint_limits.yaml.
+
+default_velocity_scaling_factor: 0.5
+default_acceleration_scaling_factor: 0.5
+
+joint_limits:
+  # ----- LEFT arm -----
+  left_shoulder_pan_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_shoulder_lift_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_elbow_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_wrist_1_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_wrist_2_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_wrist_3_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  left_finger_joint:
+    has_velocity_limits: true
+    max_velocity: 0.15
+    has_acceleration_limits: true
+    max_acceleration: 0.5
+
+  # ----- RIGHT arm (identical caps) -----
+  right_shoulder_pan_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_shoulder_lift_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_elbow_joint:
+    has_velocity_limits: true
+    max_velocity: 3.15
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_wrist_1_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_wrist_2_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_wrist_3_joint:
+    has_velocity_limits: true
+    max_velocity: 3.20
+    has_acceleration_limits: true
+    max_acceleration: 3.0
+  right_finger_joint:
+    has_velocity_limits: true
+    max_velocity: 0.15
+    has_acceleration_limits: true
+    max_acceleration: 0.5
