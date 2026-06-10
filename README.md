@@ -2,7 +2,7 @@
 
 > **Status: ongoing — Phase 1 (workcell + dual-arm handoff + 4-section stacking) in active iteration. See [PLAN.md](PLAN.md) for the full design and the phase roadmap.**
 
-A dual-arm human-robot-collaboration (HRC) workcell in ROS 2 + MoveIt 2 + MuJoCo where two UR5e cobots perform a coordinated bimanual sort task while a human operator works alongside them. Built CPU-only, on-device, with no paid APIs or cloud calls — targeted at the A\*STAR SIMTech / ARTC robotics roles (ARM, ASR, SafeHRC, Process Robotisation).
+A personal research / portfolio project: a dual-arm human-robot-collaboration (HRC) workcell in ROS 2 + MoveIt 2 + MuJoCo where two UR5e cobots perform a coordinated bimanual sort task while a human operator works alongside them. Built CPU-only, on-device, with no paid APIs or cloud calls.
 
 ---
 
@@ -193,14 +193,14 @@ X / Y / Z / N / M / P / Q targets are populated and validated in Phase 5.
 
 ---
 
-## How this maps to each A\*STAR role
+## What this project demonstrates
 
-| Role | What this project demonstrates |
+| Area | Demonstrated capability |
 |---|---|
-| **ARTC SafeHRC** (Req 680) | ISO/TS 15066 SSM zones (visual + classifier), PFL hook, anticipatory safety with learned trajectory prediction, validated against reactive and naive baselines |
-| **SIMTech ARM** (Req 860) | Bimanual coordinated manipulation, language-conditioned task specification, open-vocab perception — frontier of robotic manipulation in 2026 |
-| **ARTC ASR** (Req 627) | End-to-end ROS 2 system with clean package boundaries, modular AI components, research-grade evaluation methodology |
-| **ARTC Process Robotisation** | Operator workstation + shared workpiece + scanner infrastructure proves cell-level thinking; voice / VLM / predictor are drop-in for new processes |
+| **Safe HRC** | ISO/TS 15066 SSM zones (visual + classifier), PFL hook, anticipatory safety with learned trajectory prediction, validated against reactive and naive-halt baselines |
+| **Advanced manipulation** | Bimanual coordinated pick-handover-place, language-conditioned task specification, open-vocab perception with no fiducials |
+| **Systems engineering** | End-to-end ROS 2 system with clean package boundaries, modular AI components, research-grade evaluation methodology |
+| **Cell-level thinking** | Operator workstation + shared workpiece + scanner infrastructure; voice / VLM / predictor designed as drop-in modules for new processes |
 
 ---
 
@@ -212,7 +212,7 @@ Once a package is feature-complete and demo-stable, it is **locked** via a `CHEC
 
 ## Author
 
-**Kyaw Linn Khant** — building this as a portfolio demonstration for the A\*STAR robotics research roles. Feedback and pull requests welcome.
+**Kyaw Linn Khant** — building this as a personal research project. Feedback and pull requests welcome.
 
 ---
 
