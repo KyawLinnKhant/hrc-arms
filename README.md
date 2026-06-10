@@ -113,6 +113,42 @@ Each locked package has a `CHECKPOINT.md` documenting what the user signed off o
 
 Phase 1 acceptance: full 20-cube round (5 blue + 6 yellow + 4 pink + 5 purple) completes without abort.
 
+### Remaining steps (live TODO)
+
+**Phase 1 — finish the stacking demo**
+- [ ] Make all four colour cubes nudge laterally toward the previous neighbour (currently only blue does this cleanly; yellow / pink / purple still lag in their animation).
+- [ ] Eliminate the residual "cube lags behind the moving gripper" artefact on the right arm during the stack-approach motion (bump marker republish rate, confirm zero-stamp TF lookup).
+- [ ] Plan reliably for every cube in every section (5 blue + 6 yellow + 4 pink + 5 purple = 20 placements per round) without OMPL aborts. Today some seeds intermittently miss IK on the second blue / pink cubes — expand the IK seed bank for the placement-from-outside pose.
+- [ ] Lock `hrc_handoff_demo` with a `CHECKPOINT.md` once the 20-cube round completes 5× in a row without abort.
+
+**Phase 2 — safety + scene + operator**
+- [ ] `hrc_safety` — zone_classifier (CLEAR / Yellow / Orange / Red per arm), safety_monitor (pre-flight + watchdog + e-stop), stack_light, force_monitor (PFL grip-force hook).
+- [ ] `hrc_scene` — painted SSM floor zones, light curtain, scanner cones, workstation props, signage (all MarkerArray).
+- [ ] `hrc_operator` — walker traversing the −Y front of the cell along ±X, with a reaching-arm sub-animation when near the pickup table.
+
+**Phase 3 — anticipatory safety (the research contribution)**
+- [ ] `hrc_predictor` — synthetic data gen from the walker, train a small LSTM (~10 K params), export TorchScript, publish `/safety/human_pose_predicted` at 1 s and 2 s horizons.
+- [ ] `anticipatory_zone` — same interface as `zone_classifier` but uses the predicted pose; publishes `/safety/zone_predicted`.
+- [ ] Metrics: prediction RMSE on held-out trajectories, dodge lead-time vs reactive.
+
+**Phase 4 — modern AI layer**
+- [ ] `hrc_vlm_perception` — Moondream2-int8 loaded once, service `/vlm/locate` (string query → bbox + 3D pose via depth lookup).
+- [ ] `hrc_voice` — whisper.cpp tiny.en + Phi-3-mini intent parser, publishes `/task/command` as structured JSON.
+- [ ] Metrics: VLM grounding accuracy + intent classification accuracy.
+
+**Phase 5 — task planner + benchmark**
+- [ ] `hrc_task_planner` — full state machine (IDLE → DETECTING → PICKING_A → HANDOVER → PLACING → COMPLETE), language-conditioned via `/task/command`.
+- [ ] `hrc_benchmark` — scenario runner + three baselines (naive halt, reactive, anticipatory), metrics collector, analysis script.
+- [ ] Populate the X / Y / Z / N / M / P / Q targets in the falsifiable claims with measured numbers.
+
+**Phase 6 — demo + write-up**
+- [ ] `hrc_bringup` — full_demo.launch, headless.launch, RViz config.
+- [ ] `run_demo.sh` one-command launcher.
+- [ ] 90 s split-screen demo video with voice command captions.
+- [ ] Architecture diagram render + research-paper-style write-up of motivation, method, metrics, ablations, failure modes.
+
+**Total remaining effort: ~12 evenings (~45–60 focused hours) on top of what's already in main.**
+
 ---
 
 ## Quick start
